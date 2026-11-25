@@ -1079,7 +1079,7 @@ pub fn run_monte_carlo_simulation(state: &ChampionshipState, opts: &SimOptions) 
         elapsed_ms,
         threads_used,
         engine_badge: format!(
-            "⚙️ Motor multihilo ({} hilos) • {:.1} ms",
+            "⚙️ Motor de Simulación ({} hilos) • {:.1} ms",
             threads_used, elapsed_ms
         ),
     }

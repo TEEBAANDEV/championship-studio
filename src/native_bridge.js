@@ -1,6 +1,6 @@
 /**
  * Puente con la versión de escritorio: conecta la interfaz con el motor
- * de simulación multihilo y con el guardado en disco.
+ * de simulación y con el guardado en disco.
  */
 (function () {
   function getInvoke() {
