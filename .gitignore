@@ -1,0 +1,16 @@
+node_modules/
+src-tauri/target/
+src-tauri/gen/
+*.exe
+*.log
+.DS_Store
+Thumbs.db
+
+# Datos personales del usuario (se generan al usar la app)
+datos/campeonato_*.json
+imagenes/pilotos/*
+imagenes/equipos/*
+!imagenes/LEEME-IMAGENES.txt
+
+# Datos crudos de origen (se descargan con build_historical_db.js)
+datos/f1db_raw/

@@ -1,0 +1,16 @@
+=== IMÁGENES PROPIAS DE PILOTOS Y ESCUDERÍAS ===
+
+Esta aplicación no trae fotos ni logos oficiales (tienen derechos de autor).
+Los cascos y escudos se generan solos, pero puedes poner tus propias imágenes.
+
+1. Carpeta "pilotos/":
+   Guarda aquí fotos o cascos (.png, .jpg, .webp, .svg).
+   Si el archivo se llama como la sigla del piloto (ej: VER.png) o su número (ej: 3.png),
+   el botón "Sincronizar Carpeta de Imágenes" de la app lo asigna automáticamente.
+
+2. Carpeta "equipos/":
+   Guarda aquí logos de escuderías (.png, .jpg, .webp, .svg).
+   Si el archivo se llama como la sigla del equipo (ej: FER.png), se vincula al sincronizar,
+   o puedes elegirlo desde la galería dentro de la app.
+
+Usa solo imágenes propias o con licencia que te permita usarlas.

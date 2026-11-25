@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Championship Studio — Gestión, Puntos y Probabilidades</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Barra lateral de navegación -->
+    <aside class="sidebar" aria-label="Navegación principal">
+      <div class="brand-box">
+        <div class="brand-logo" aria-hidden="true">CS</div>
+        <div class="brand-text">
+          <span class="brand-title">CHAMPIONSHIP</span>
+          <span class="brand-subtitle">STUDIO</span>
+        </div>
+      </div>
+
+      <div class="championship-badge-card">
+        <div class="champ-badge-header">
+          <span class="champ-badge-tag" id="sidebarSeasonTag">TEMPORADA 2026</span>
+          <button type="button" class="btn-icon-subtle" id="btnEditChampMeta" title="Cambiar nombre del campeonato" aria-label="Cambiar nombre del campeonato">
+            ✎
+          </button>
+        </div>
+        <h2 class="champ-badge-name" id="sidebarChampName">Campeonato Mundial de Fórmula 1</h2>
+        <div class="champ-progress-wrap">
+          <div class="champ-progress-labels">
+            <span id="sidebarProgressText">3 de 10 fechas</span>
+            <span id="sidebarProgressPct">30%</span>
+          </div>
+          <div class="champ-progress-bar">
+            <div class="champ-progress-fill" id="sidebarProgressFill" style="width: 30%"></div>
+          </div>
+        </div>
+      </div>
+
+      <nav class="side-nav">
+        <button type="button" class="nav-item active" data-tab="dashboard">
+          <span class="nav-icon" aria-hidden="true">🏆</span>
+          <div class="nav-labels">
+            <span class="nav-title">Campeonato y Puntos</span>
+          </div>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="probabilities">
+          <span class="nav-icon" aria-hidden="true">🎲</span>
+          <div class="nav-labels">
+            <span class="nav-title">Simulador de Probabilidades</span>
+          </div>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="calendar">
+          <span class="nav-icon" aria-hidden="true">🗓️</span>
+          <div class="nav-labels">
+            <span class="nav-title">Pistas y Resultados</span>
+          </div>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="rosters">
+          <span class="nav-icon" aria-hidden="true">🏎️</span>
+          <div class="nav-labels">
+            <span class="nav-title">Pilotos y Escuderías</span>
+          </div>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="points">
+          <span class="nav-icon" aria-hidden="true">⚙️</span>
+          <div class="nav-labels">
+            <span class="nav-title">Sistema de Puntos</span>
+          </div>
+        </button>
+
+        <button type="button" class="nav-item" data-tab="history">
+          <span class="nav-icon" aria-hidden="true">🏛️</span>
+          <div class="nav-labels">
+            <span class="nav-title">Historia (1950–2026)</span>
+          </div>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-actions-grid">
+          <button type="button" class="btn btn-secondary btn-sm" id="btnExportJson" title="Guardar campeonato en un archivo en tu PC">
+            💾 Exportar JSON
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="btnImportJson" title="Cargar un campeonato guardado desde tu PC">
+            📂 Importar JSON
+          </button>
+        </div>
+        <div class="sidebar-actions-grid">
+          <button type="button" class="btn btn-ghost btn-sm" id="btnLoadDemo" title="Cargar la temporada 2026 en su estado actual (19 de 22 fechas disputadas)">
+            🔄 Temporada 2026 (Actual)
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnLoad2026Zero" title="Cargar la parrilla 2026 (11 equipos y 22 pilotos) desde la Fecha 1 en 0 puntos">
+            🏁 Temporada 2026 (Fecha 1)
+          </button>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnNewBlank" style="width: 100%">
+          ✨ Crear Torneo en Blanco
+        </button>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnCheckLive" style="width: 100%" title="Descarga los resultados oficiales más recientes de la temporada">
+          🔄 Buscar resultados nuevos
+        </button>
+      </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="main-area">
+      <!-- Notificación flotante (Toast) -->
+      <div id="toastBanner" class="toast-banner" role="status" aria-live="polite" hidden></div>
+
+      <!-- Aviso de resultados nuevos -->
+      <div id="liveUpdateBanner" class="live-update-banner" role="status" hidden>
+        <span id="liveUpdateText"></span>
+        <div class="live-update-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="btnApplyLiveUpdate">Actualizar ahora</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnDismissLiveUpdate">Ahora no</button>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           VISTA 1: CAMPEONATO, BOLSA DE PUNTOS Y CHANCES MATEMÁTICAS
+           ========================================== -->
+      <section class="tab-view active" id="view-dashboard" aria-labelledby="heading-dashboard">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">CENTRO DE TELEMETRÍA Y MATEMÁTICA DEL TÍTULO</span>
+            <h1 id="heading-dashboard">Estado del Campeonato y Puntos en Juego</h1>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn btn-secondary" id="btnOpenHistoryFromDash" title="Explorar y cargar cualquiera de las 77 temporadas históricas desde 1950 hasta 2026">
+              🏛️ Temporadas (1950–2026)
+            </button>
+            <button type="button" class="btn btn-secondary" id="btnGoToNextRace">
+              🏁 Anotar Próxima Carrera
+            </button>
+            <button type="button" class="btn btn-primary" id="btnQuickSimFromDash">
+              🎲 Calcular Probabilidades Finales
+            </button>
+          </div>
+        </header>
+
+        <!-- Tarjetas de Resumen Matemático de Puntos -->
+        <div class="kpi-grid">
+          <article class="kpi-card kpi-accent-red">
+            <div class="kpi-top">
+              <span class="kpi-label">BOLSA TOTAL DEL CAMPEONATO</span>
+              <span class="kpi-pill" id="kpiTotalRacesPill">10 Fechas</span>
+            </div>
+            <div class="kpi-value" id="kpiTotalPool">0 pts</div>
+            <p class="kpi-sub" id="kpiPoolBreakdown">
+              0 pts ya repartidos &bull; <strong>0 pts por repartir</strong> entre todos los puestos
+            </p>
+          </article>
+
+          <article class="kpi-card kpi-accent-cyan">
+            <div class="kpi-top">
+              <span class="kpi-label">MÁXIMO RESTANTE PARA 1 PILOTO</span>
+              <span class="kpi-pill" id="kpiRemainingSprintsPill">0 Sprints rest.</span>
+            </div>
+            <div class="kpi-value" id="kpiMaxSingleRemaining">0 pts</div>
+            <p class="kpi-sub" id="kpiMaxSingleDetail">
+              Puntaje máximo si un piloto gana todo lo que resta de temporada
+            </p>
+          </article>
+
+          <article class="kpi-card kpi-accent-emerald">
+            <div class="kpi-top">
+              <span class="kpi-label">CONTENDIENTES MATEMÁTICOS</span>
+              <span class="kpi-pill" id="kpiAlivePctPill">100% vivos</span>
+            </div>
+            <div class="kpi-value" id="kpiContendersCount">0 pilotos</div>
+            <p class="kpi-sub" id="kpiContendersSub">
+              Pueden alcanzar o superar matemáticamente el puntaje actual del líder
+            </p>
+          </article>
+
+          <article class="kpi-card kpi-accent-amber">
+            <div class="kpi-top">
+              <span class="kpi-label">LÍDER Y DEFINICIÓN DEL TÍTULO</span>
+              <span class="kpi-pill" id="kpiLeaderGapPill">Ventaja</span>
+            </div>
+            <div class="kpi-value" id="kpiLeaderName">—</div>
+            <p class="kpi-sub" id="kpiClinchScenario">
+              Registra pilotos y carreras para ver los escenarios de coronación.
+            </p>
+          </article>
+        </div>
+
+        <!-- Conmutador Pilotos / Escuderías / Evolución -->
+        <div class="subtabs-bar" role="tablist" aria-label="Vistas de tabla de posiciones">
+          <button type="button" class="subtab-btn active" data-dash-subtab="drivers">
+            🏎️ Campeonato de Pilotos y Techo Matemático
+          </button>
+          <button type="button" class="subtab-btn" data-dash-subtab="constructors">
+            🛡️ Campeonato de Escuderías (Constructores)
+          </button>
+          <button type="button" class="subtab-btn" data-dash-subtab="progression">
+            📈 Evolución de Puntos Fecha a Fecha
+          </button>
+        </div>
+
+        <!-- Subvista: Tabla de Pilotos -->
+        <div class="dash-subview active" id="dash-subview-drivers">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Tabla General de Pilotos y Límite Matemático</h2>
+                <p class="card-subtitle">
+                  Ordenada según reglamento FIA (Puntos &rarr; Victorias &rarr; 2° puestos). Incluye el máximo puntaje teórico y el rango de posiciones al que cada piloto puede aspirar.
+                </p>
+              </div>
+            </div>
+            <div id="driversStandingsContainer"></div>
+          </div>
+        </div>
+
+        <!-- Subvista: Tabla de Constructores -->
+        <div class="dash-subview" id="dash-subview-constructors">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Campeonato Mundial de Constructores</h2>
+                <p class="card-subtitle">
+                  Suma de puntos de todos los pilotos asignados a cada escudería a lo largo de la temporada.
+                </p>
+              </div>
+            </div>
+            <div id="constructorsStandingsContainer"></div>
+          </div>
+        </div>
+
+        <!-- Subvista: Gráfico de Evolución -->
+        <div class="dash-subview" id="dash-subview-progression">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Curva de Evolución del Campeonato</h2>
+                <p class="card-subtitle">
+                  Progresión acumulada de puntos carrera a carrera de los principales candidatos al título.
+                </p>
+              </div>
+            </div>
+            <div id="progressionChartContainer" class="chart-box"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           VISTA 2: SIMULADOR DE PROBABILIDADES (MONTE CARLO)
+           ========================================== -->
+      <section class="tab-view" id="view-probabilities" aria-labelledby="heading-probabilities">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">MOTOR ESTADÍSTICO MONTE CARLO</span>
+            <h1 id="heading-probabilities">Predicción y Probabilidades de Posiciones Finales</h1>
+          </div>
+          <div class="header-actions" style="align-items: center;">
+            <span id="engineStatusBadge" class="kpi-pill engine-badge">
+              ⚙️ Motor multihilo
+            </span>
+            <button type="button" class="btn btn-primary" id="btnRunMonteCarlo">
+              ⚡ Ejecutar Simulación Ahora
+            </button>
+          </div>
+        </header>
+
+        <!-- Panel de Parámetros de Simulación -->
+        <div class="card sim-controls-card">
+          <div class="sim-controls-grid">
+            <div class="form-group">
+              <label for="simIterationsSelect">Cantidad de temporadas a simular</label>
+              <select id="simIterationsSelect" class="form-control">
+                <option value="5000">5.000 simulaciones (Rápido)</option>
+                <option value="25000" selected>25.000 simulaciones (Recomendado)</option>
+                <option value="50000">50.000 simulaciones (Ultra precisión)</option>
+                <option value="100000">100.000 simulaciones (Extremo)</option>
+              </select>
+              <span class="field-hint">Se reparte entre todos los núcleos de tu procesador.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="simFormWeightRange">
+                Peso del Rendimiento Actual vs. Nivel Base: <strong id="simFormWeightLabel">70% Actual</strong>
+              </label>
+              <input type="range" id="simFormWeightRange" min="0" max="100" step="5" value="70" class="range-slider" />
+              <span class="field-hint">Cuánto pesan las carreras ya corridas frente al ritmo base del piloto.</span>
+            </div>
+
+            <div class="form-group">
+              <label for="simChaosRange">
+                Factor de Imprevisibilidad (Safety Car / Lluvia / DNF): <strong id="simChaosLabel">35% Realista</strong>
+              </label>
+              <input type="range" id="simChaosRange" min="5" max="85" step="5" value="35" class="range-slider" />
+              <span class="field-hint">Mayor porcentaje aumenta sorpresas, remontadas y abandonos fortuitos.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conmutador de Simulación: Pilotos vs Escuderías -->
+        <div class="subtabs-bar" role="tablist" aria-label="Modo de simulación Monte Carlo">
+          <button type="button" class="subtab-btn active" data-sim-subtab="drivers">
+            🏎️ Simulación de Pilotos
+          </button>
+          <button type="button" class="subtab-btn" data-sim-subtab="constructors">
+            🛡️ Simulación de Escuderías (Constructores)
+          </button>
+        </div>
+
+        <!-- Subvista Simulación 1: Pilotos -->
+        <div class="dash-subview active" id="sim-subview-drivers">
+          <!-- Tarjetas de Favoritos al Título de Pilotos -->
+          <div id="simTopContendersGrid" class="sim-contenders-grid"></div>
+
+          <!-- Tabla de Probabilidades y Rango de Puntos Esperados (Pilotos) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Proyección Final de Puntos y Probabilidades por Piloto</h2>
+                <p class="card-subtitle" id="simSummarySubtitle">
+                  Resultados calculados sobre las fechas pendientes del calendario.
+                </p>
+              </div>
+            </div>
+            <div id="simProbabilitiesTableContainer"></div>
+          </div>
+
+          <!-- Matriz de Posiciones Finales de Pilotos (Heatmap 1° a N°) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Matriz de Distribución de Posiciones Finales — Pilotos (%)</h2>
+                <p class="card-subtitle">
+                  Probabilidad exacta de que cada piloto termine el campeonato en el puesto 1°, 2°, 3°, etc.
+                </p>
+              </div>
+            </div>
+            <div id="simMatrixTableContainer"></div>
+          </div>
+        </div>
+
+        <!-- Subvista Simulación 2: Escuderías (Constructores) -->
+        <div class="dash-subview" id="sim-subview-constructors">
+          <!-- Tarjetas de Favoritos al Título de Constructores -->
+          <div id="simTeamsTopContendersGrid" class="sim-contenders-grid"></div>
+
+          <!-- Tabla de Probabilidades y Rango de Puntos Esperados (Constructores) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Proyección Final de Puntos y Probabilidades por Escudería</h2>
+                <p class="card-subtitle" id="simTeamsSummarySubtitle">
+                  Suma proyectada de los pilotos de cada equipo en las fechas pendientes del calendario.
+                </p>
+              </div>
+            </div>
+            <div id="simTeamsProbabilitiesTableContainer"></div>
+          </div>
+
+          <!-- Matriz de Posiciones Finales de Constructores (Heatmap 1° a 11°) -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Matriz de Distribución de Posiciones Finales — Constructores (%)</h2>
+                <p class="card-subtitle">
+                  Probabilidad exacta de que cada escudería termine el Campeonato Mundial de Constructores en el puesto 1°, 2°, 3°, etc.
+                </p>
+              </div>
+            </div>
+            <div id="simTeamsMatrixTableContainer"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           VISTA 3: PISTAS Y RESULTADOS DE CARRERA (CALENDARIO)
+           ========================================== -->
+      <section class="tab-view" id="view-calendar" aria-labelledby="heading-calendar">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">GESTIÓN DE FECHAS, CIRCUITOS Y RESULTADOS</span>
+            <h1 id="heading-calendar">Calendario de Pistas y Resultados</h1>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn btn-primary" id="btnAddTrack">
+              ➕ Agregar Pista / Fecha
+            </button>
+          </div>
+        </header>
+
+        <div id="calendarTracksGrid" class="tracks-grid"></div>
+      </section>
+
+      <!-- ==========================================
+           VISTA 4: PILOTOS Y ESCUDERÍAS
+           ========================================== -->
+      <section class="tab-view" id="view-rosters" aria-labelledby="heading-rosters">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">PARRILLA PERSONALIZABLE CON IMÁGENES</span>
+            <h1 id="heading-rosters">Pilotos y Escuderías</h1>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn btn-secondary" id="btnAddTeam">
+              🛡️ Nueva Escudería
+            </button>
+            <button type="button" class="btn btn-primary" id="btnAddDriver">
+              🏎️ Nuevo Piloto
+            </button>
+          </div>
+        </header>
+
+        <!-- Apartado de Carpeta de Imágenes de Equipos y Pilotos -->
+        <div class="card sim-controls-card">
+          <div class="card-header" style="margin-bottom: 10px">
+            <div>
+              <h2 class="card-title">🖼️ Apartado de Imágenes de Pilotos y Escuderías</h2>
+              <p class="card-subtitle">
+                Guarda tus fotos o logos en la carpeta <code>imagenes/pilotos</code> e <code>imagenes/equipos</code> de tu proyecto (con la sigla ej: <code>LAW.png</code>, <code>VER.png</code>, <code>RBR.png</code>) y sincronízalas con un clic, o <strong>arrastra cualquier imagen directo encima de la tarjeta</strong> de un piloto o equipo abajo.
+              </p>
+            </div>
+            <div class="header-actions">
+              <button type="button" class="btn btn-secondary btn-sm" id="btnOpenDriversImgFolder">
+                📂 Carpeta Imágenes Pilotos
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnOpenTeamsImgFolder">
+                📂 Carpeta Imágenes Equipos
+              </button>
+              <button type="button" class="btn btn-primary btn-sm" id="btnSyncLocalImages">
+                🔄 Sincronizar Imágenes de Carpetas
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sección de Escuderías -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Escuderías Inscritas (Sin límite de pilotos por equipo)</h2>
+              <p class="card-subtitle">
+                Cada equipo puede tener 2, 3, 4 o más pilotos (titulares, rotaciones de mitad de temporada o reservas). También puedes soltar una imagen encima de cualquier tarjeta para cambiar su logo.
+              </p>
+            </div>
+          </div>
+          <div id="teamsRosterGrid" class="teams-grid"></div>
+        </div>
+
+        <!-- Sección de Pilotos -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Parrilla de Pilotos y Cambios de Escudería</h2>
+              <p class="card-subtitle">
+                Configura la escudería actual y los equipos por los que pasó el piloto en la temporada (ej. RB &harr; Red Bull). Al anotar cada carrera también puedes indicar con qué equipo corrió esa fecha.
+              </p>
+            </div>
+          </div>
+          <div id="driversRosterGrid" class="drivers-grid"></div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           VISTA 5: SISTEMA DE PUNTOS ADAPTABLE
+           ========================================== -->
+      <section class="tab-view" id="view-points" aria-labelledby="heading-points">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">REGLAMENTO DE PUNTUACIÓN PERSONALIZABLE</span>
+            <h1 id="heading-points">Configuración del Sistema de Puntos</h1>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn btn-primary" id="btnSavePointsSystem">
+              💾 Guardar Sistema de Puntos
+            </button>
+          </div>
+        </header>
+
+        <!-- Presets Rápidos -->
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Plantillas Rápidas de Reglamento</h2>
+              <p class="card-subtitle">
+                Selecciona una plantilla histórica o actual como punto de partida, o edita cualquier valor manualmente abajo.
+              </p>
+            </div>
+          </div>
+          <div class="presets-bar" id="pointsPresetsBar"></div>
+        </div>
+
+        <div class="points-config-layout">
+          <!-- Puntos de Carrera Principal -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Puntos por Posición — Carrera Principal</h2>
+                <p class="card-subtitle">Define cuántos puestos suman puntos el domingo y cuánto recibe cada uno.</p>
+              </div>
+              <div class="btn-group-inline">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnAddRacePointPos">+ Puesto</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btnRemoveRacePointPos">− Puesto</button>
+              </div>
+            </div>
+            <div id="racePointsInputsGrid" class="points-inputs-grid"></div>
+          </div>
+
+          <!-- Puntos de Carrera Sprint y Bonus -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Puntos de Carrera Sprint y Bonificaciones</h2>
+                <p class="card-subtitle">Se aplican en las fechas marcadas con formato Sprint y para récords del fin de semana.</p>
+              </div>
+              <div class="btn-group-inline">
+                <button type="button" class="btn btn-secondary btn-sm" id="btnAddSprintPointPos">+ Puesto Sprint</button>
+                <button type="button" class="btn btn-ghost btn-sm" id="btnRemoveSprintPointPos">− Puesto Sprint</button>
+              </div>
+            </div>
+            <div id="sprintPointsInputsGrid" class="points-inputs-grid"></div>
+
+            <hr class="divider" />
+
+            <div class="bonus-inputs-grid">
+              <div class="form-group">
+                <label for="inputFastestLapPoints">Puntos por Vuelta Rápida</label>
+                <input type="number" id="inputFastestLapPoints" min="0" max="20" class="form-control" value="1" />
+                <span class="field-hint">Pon 0 si el reglamento no entrega punto extra por vuelta rápida.</span>
+              </div>
+
+              <div class="form-group">
+                <label for="inputFastestLapLimit">Requisito Top X para Vuelta Rápida</label>
+                <input type="number" id="inputFastestLapLimit" min="1" max="40" class="form-control" value="10" />
+                <span class="field-hint">Ej: 10 significa que debe terminar dentro del Top 10 (sin DNF) para sumar el punto.</span>
+              </div>
+
+              <div class="form-group">
+                <label for="inputPolePoints">Puntos por Pole Position (Clasificación)</label>
+                <input type="number" id="inputPolePoints" min="0" max="20" class="form-control" value="0" />
+                <span class="field-hint">Opcional: ideal para torneos personalizados o ligas donde la Pole suma puntos.</span>
+              </div>
+            </div>
+
+            <div class="points-preview-banner" id="pointsLivePreviewBanner"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           VISTA 6: ARCHIVO HISTÓRICO F1 (1950–2026)
+           ========================================== -->
+      <section class="tab-view" id="view-history" aria-labelledby="heading-history">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">ENCICLOPEDIA OFICIAL Y SIMULADOR HISTÓRICO (1950–2026)</span>
+            <h1 id="heading-history">Base de Datos Histórica de Fórmula 1 (1950–2026)</h1>
+          </div>
+          <div class="header-actions">
+            <div class="hist-quick-jump">
+              <label for="histQuickYearSelect" class="sr-only">Ir al año</label>
+              <select id="histQuickYearSelect" class="form-control form-control-sm" title="Seleccionar temporada para cargar directamente"></select>
+              <button type="button" class="btn btn-primary btn-sm" id="btnHistQuickLoadFull" title="Cargar temporada seleccionada con todos sus resultados históricos">
+                🏁 Cargar Temporada
+              </button>
+              <button type="button" class="btn btn-secondary btn-sm" id="btnHistQuickLoadZero" title="Cargar temporada desde la Fecha 1 en 0 puntos (todos al 100%) para simularla">
+                🎲 Cargar Desde Cero
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Resumen de la Base de Datos -->
+        <div class="kpi-grid">
+          <article class="kpi-card kpi-accent-red">
+            <div class="kpi-top">
+              <span class="kpi-label">TEMPORADAS OFICIALES</span>
+              <span class="kpi-pill">1950 – 2026</span>
+            </div>
+            <div class="kpi-value" id="histKpiSeasons">77 Años</div>
+            <p class="kpi-sub">
+              Con calendarios reales, reglamentos de puntos por época y resultados completos
+            </p>
+          </article>
+
+          <article class="kpi-card kpi-accent-cyan">
+            <div class="kpi-top">
+              <span class="kpi-label">PILOTOS EN BASE DE DATOS</span>
+              <span class="kpi-pill">Historia Completa</span>
+            </div>
+            <div class="kpi-value" id="histKpiDrivers">920 Pilotos</div>
+            <p class="kpi-sub">
+              Estadísticas de carrera, campeonatos, victorias, podios y rating histórico
+            </p>
+          </article>
+
+          <article class="kpi-card kpi-accent-emerald">
+            <div class="kpi-top">
+              <span class="kpi-label">ESCUDERÍAS Y CIRCUITOS</span>
+              <span class="kpi-pill">1,172 GPs</span>
+            </div>
+            <div class="kpi-value" id="histKpiTeamsAndTracks">187 Equipos &bull; 78 Pistas</div>
+            <p class="kpi-sub">
+              Importa cualquier piloto, constructor o circuito histórico a tu torneo actual
+            </p>
+          </article>
+        </div>
+
+        <!-- Barra de Sub-pestañas y Filtros del Archivo Histórico -->
+        <div class="panel-card">
+          <div class="hist-toolbar">
+            <div class="subtab-bar" role="tablist" aria-label="Categorías del archivo histórico">
+              <button type="button" class="subtab-btn active" data-hist-tab="seasons">
+                🏆 Temporadas (77)
+              </button>
+              <button type="button" class="subtab-btn" data-hist-tab="drivers">
+                🏎️ Pilotos Históricos (920)
+              </button>
+              <button type="button" class="subtab-btn" data-hist-tab="constructors">
+                🛡️ Escuderías (187)
+              </button>
+              <button type="button" class="subtab-btn" data-hist-tab="circuits">
+                🗺️ Circuitos (78)
+              </button>
+            </div>
+
+            <div class="hist-search-controls">
+              <input
+                type="search"
+                id="histSearchInput"
+                class="form-control form-control-sm hist-search-input"
+                placeholder="🔍 Buscar por año, piloto, equipo, circuito o país..."
+              />
+              <select id="histFilterSelect" class="form-control form-control-sm">
+                <option value="all">Todas las décadas</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="histResultsSummary" class="hist-results-summary"></div>
+          <div id="histContentContainer" class="hist-content-grid"></div>
+          <div id="histLoadMoreWrap" class="hist-load-more-wrap" hidden>
+            <button type="button" class="btn btn-secondary" id="btnHistLoadMore">
+              Mostrar más resultados...
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- =========================================================
+       DIÁLOGOS MODALES NATIVOS (<dialog> siguiendo Modern Web Guidance)
+       ========================================================= -->
+
+  <!-- Modal 1: Editar Nombre y Temporada del Campeonato -->
+  <dialog id="dialogChampMeta" aria-labelledby="dialogChampMetaTitle" closedby="any">
+    <form method="dialog" id="formChampMeta" class="dialog-box">
+      <header class="dialog-header">
+        <h2 id="dialogChampMetaTitle">Configurar Nombre del Campeonato</h2>
+        <button type="button" class="btn-close-dialog" data-close-dialog="dialogChampMeta" aria-label="Cerrar ventana">✕</button>
+      </header>
+      <div class="dialog-body">
+        <div class="form-group">
+          <label for="inputChampName">Nombre del Torneo o Campeonato</label>
+          <input type="text" id="inputChampName" class="form-control" required autofocus placeholder="Ej: Campeonato Mundial de Fórmula 1" />
+        </div>
+        <div class="form-group">
+          <label for="inputChampYear">Año o Temporada</label>
+          <input type="text" id="inputChampYear" class="form-control" required placeholder="Ej: 2026" />
+        </div>
+      </div>
+      <footer class="dialog-footer">
+        <button type="button" class="btn btn-ghost" data-close-dialog="dialogChampMeta">Cancelar</button>
+        <button type="submit" value="save" class="btn btn-primary">Guardar Cambios</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Modal 2: Crear / Editar Piloto (con imagen) -->
+  <dialog id="dialogDriver" aria-labelledby="dialogDriverTitle" closedby="any">
+    <form method="dialog" id="formDriver" class="dialog-box">
+      <header class="dialog-header">
+        <h2 id="dialogDriverTitle">Datos del Piloto</h2>
+        <button type="button" class="btn-close-dialog" data-close-dialog="dialogDriver" aria-label="Cerrar ventana">✕</button>
+      </header>
+      <div class="dialog-body">
+        <input type="hidden" id="driverIdInput" />
+
+        <div class="image-picker-row">
+          <img id="driverImagePreview" src="" alt="Vista previa del piloto" class="avatar-preview-lg" />
+          <div class="image-picker-controls" style="flex:1">
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <label for="driverImageFile" class="btn btn-secondary btn-sm file-label-btn">
+                📷 Subir Foto / Casco desde tu PC
+              </label>
+              <input type="file" id="driverImageFile" accept="image/*" hidden />
+              <button type="button" class="btn btn-ghost btn-sm" id="btnGenerateHelmet">
+                🎨 Generar Casco Automático
+              </button>
+            </div>
+            <select id="driverLocalFolderSelect" class="form-control form-control-sm" style="width:100%" aria-label="Elegir imagen de la carpeta imagenes/pilotos">
+              <option value="">🖼️ O elegir archivo de la carpeta imagenes/pilotos/...</option>
+            </select>
+            <span class="field-hint">Admite PNG, JPG, WEBP o SVG. También se guarda en <code>imagenes/pilotos/</code>.</span>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="driverNameInput">Nombre Completo *</label>
+            <input type="text" id="driverNameInput" class="form-control" required autofocus placeholder="Ej: Ayrton Senna" />
+          </div>
+          <div class="form-group">
+            <label for="driverCodeInput">Sigla (3 letras) *</label>
+            <input type="text" id="driverCodeInput" class="form-control" maxlength="4" required placeholder="Ej: SEN" />
+          </div>
+        </div>
+
+        <div class="form-row-3">
+          <div class="form-group">
+            <label for="driverNumberInput">Número (Dorsal) *</label>
+            <input type="number" id="driverNumberInput" class="form-control" min="0" max="999" required placeholder="12" />
+          </div>
+          <div class="form-group">
+            <label for="driverCountryInput">País / Nacionalidad</label>
+            <input type="text" id="driverCountryInput" class="form-control" placeholder="Ej: BRA / CHL" />
+          </div>
+          <div class="form-group">
+            <label for="driverRatingInput">Ritmo Base (50–99)</label>
+            <input type="number" id="driverRatingInput" class="form-control" min="50" max="99" value="88" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="driverTeamSelect">Escudería Actual / Principal</label>
+          <select id="driverTeamSelect" class="form-control"></select>
+        </div>
+
+        <div class="form-group">
+          <label>🔄 Otras Escuderías en la Temporada (Cambios a mitad de año / Reserva)</label>
+          <span class="field-hint">Marca si el piloto también corrió para otro(s) equipo(s) durante el campeonato (ej. Liam Lawson entre Racing Bulls y Red Bull).</span>
+          <div id="driverSecondaryTeamsBox" class="multi-check-grid"></div>
+        </div>
+      </div>
+      <footer class="dialog-footer">
+        <button type="button" class="btn btn-danger-ghost" id="btnDeleteDriver" hidden>Eliminar Piloto</button>
+        <div class="footer-right">
+          <button type="button" class="btn btn-ghost" data-close-dialog="dialogDriver">Cancelar</button>
+          <button type="submit" value="save" class="btn btn-primary">Guardar Piloto</button>
+        </div>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Modal 3: Crear / Editar Escudería (con imagen) -->
+  <dialog id="dialogTeam" aria-labelledby="dialogTeamTitle" closedby="any">
+    <form method="dialog" id="formTeam" class="dialog-box">
+      <header class="dialog-header">
+        <h2 id="dialogTeamTitle">Datos de la Escudería</h2>
+        <button type="button" class="btn-close-dialog" data-close-dialog="dialogTeam" aria-label="Cerrar ventana">✕</button>
+      </header>
+      <div class="dialog-body">
+        <input type="hidden" id="teamIdInput" />
+
+        <div class="image-picker-row">
+          <img id="teamImagePreview" src="" alt="Vista previa del logo de la escudería" class="avatar-preview-lg" />
+          <div class="image-picker-controls" style="flex:1">
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <label for="teamImageFile" class="btn btn-secondary btn-sm file-label-btn">
+                📷 Subir Logo desde tu PC
+              </label>
+              <input type="file" id="teamImageFile" accept="image/*" hidden />
+              <button type="button" class="btn btn-ghost btn-sm" id="btnGenerateTeamCrest">
+                🛡️ Generar Escudo con Color
+              </button>
+            </div>
+            <select id="teamLocalFolderSelect" class="form-control form-control-sm" style="width:100%" aria-label="Elegir imagen de la carpeta imagenes/equipos">
+              <option value="">🖼️ O elegir archivo de la carpeta imagenes/equipos/...</option>
+            </select>
+            <span class="field-hint">Admite PNG, JPG, WEBP o SVG. También se guarda en <code>imagenes/equipos/</code>.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="teamNameInput">Nombre de la Escudería *</label>
+          <input type="text" id="teamNameInput" class="form-control" required autofocus placeholder="Ej: Scuderia Ferrari" />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="teamShortInput">Sigla del Equipo (3 letras) *</label>
+            <input type="text" id="teamShortInput" class="form-control" maxlength="4" required placeholder="Ej: FER" />
+          </div>
+          <div class="form-group">
+            <label for="teamColorInput">Color Identificatorio</label>
+            <div class="color-picker-wrap">
+              <input type="color" id="teamColorInput" value="#e8002d" class="color-input-native" />
+              <span id="teamColorHexText" class="color-hex-code">#e8002d</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>👥 Pilotos vinculados a esta Escudería (Sin límite de pilotos)</label>
+          <span class="field-hint">Puedes vincular 2, 3, 4 o más pilotos (titulares o pilotos que rotaron a mitad de temporada).</span>
+          <div id="teamDriversAssignBox" class="multi-check-grid"></div>
+        </div>
+      </div>
+      <footer class="dialog-footer">
+        <button type="button" class="btn btn-danger-ghost" id="btnDeleteTeam" hidden>Eliminar Escudería</button>
+        <div class="footer-right">
+          <button type="button" class="btn btn-ghost" data-close-dialog="dialogTeam">Cancelar</button>
+          <button type="submit" value="save" class="btn btn-primary">Guardar Escudería</button>
+        </div>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Modal 4: Crear / Editar Pista / Fecha del Calendario (con imagen) -->
+  <dialog id="dialogTrack" aria-labelledby="dialogTrackTitle" closedby="any">
+    <form method="dialog" id="formTrack" class="dialog-box">
+      <header class="dialog-header">
+        <h2 id="dialogTrackTitle">Datos de la Pista / Fecha</h2>
+        <button type="button" class="btn-close-dialog" data-close-dialog="dialogTrack" aria-label="Cerrar ventana">✕</button>
+      </header>
+      <div class="dialog-body">
+        <input type="hidden" id="trackIdInput" />
+
+        <div class="image-picker-row">
+          <img id="trackImagePreview" src="" alt="Vista previa del circuito" class="avatar-preview-lg track-preview-img" />
+          <div class="image-picker-controls" style="flex:1">
+            <div style="display:flex; gap:8px; flex-wrap:wrap">
+              <label for="trackImageFile" class="btn btn-secondary btn-sm file-label-btn">
+                📷 Subir Archivo SVG / Foto
+              </label>
+              <input type="file" id="trackImageFile" accept="image/*" hidden />
+              <button type="button" class="btn btn-ghost btn-sm" id="btnGenerateTrackSvg">
+                🎨 Trazado Genérico
+              </button>
+            </div>
+            <select id="trackCatalogSelect" class="form-control form-control-sm" style="width:100%" aria-label="Elegir trazado real de circuito de F1">
+              <option value="">🗺️ Elegir de la biblioteca de 30 trazados reales F1...</option>
+            </select>
+            <span class="field-hint">También tienes los 30 archivos .svg guardados en la carpeta <code>tracks-svg/</code> del proyecto.</span>
+          </div>
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="trackRoundInput">Número de Fecha (Ronda) *</label>
+            <input type="number" id="trackRoundInput" class="form-control" min="1" max="99" required />
+          </div>
+          <div class="form-group">
+            <label for="trackCountryInput">País / Sede</label>
+            <input type="text" id="trackCountryInput" class="form-control" placeholder="Ej: Italia / Mónaco" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="trackNameInput">Nombre del Gran Premio *</label>
+          <input type="text" id="trackNameInput" class="form-control" required autofocus placeholder="Ej: GP de Italia" />
+        </div>
+
+        <div class="form-row-2">
+          <div class="form-group">
+            <label for="trackCircuitInput">Nombre del Circuito / Autódromo</label>
+            <input type="text" id="trackCircuitInput" class="form-control" placeholder="Ej: Autodromo Nazionale Monza" />
+          </div>
+          <div class="form-group">
+            <label for="trackPointsMultiplierSelect">Escala de Puntos de la Carrera</label>
+            <select id="trackPointsMultiplierSelect" class="form-control">
+              <option value="1">🏁 100% — Puntos Completos (Normal)</option>
+              <option value="0.5">🌧️ 50% — Mitad de Puntos (Suspendida)</option>
+              <option value="2">⚡ 200% — Doble Puntuación</option>
+              <option value="0">🚫 0% — Suspendida sin puntos</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="checkbox-card" for="trackHasSprintInput">
+          <input type="checkbox" id="trackHasSprintInput" />
+          <div>
+            <strong>⚡ Fin de semana con Carrera Sprint</strong>
+            <p>Activa una carrera corta adicional que entrega puntos extra según tu reglamento.</p>
+          </div>
+        </label>
+      </div>
+      <footer class="dialog-footer">
+        <button type="button" class="btn btn-danger-ghost" id="btnDeleteTrack" hidden>Eliminar Fecha</button>
+        <div class="footer-right">
+          <button type="button" class="btn btn-ghost" data-close-dialog="dialogTrack">Cancelar</button>
+          <button type="submit" value="save" class="btn btn-primary">Guardar Fecha</button>
+        </div>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Modal 5: Anotar / Editar Resultados de Carrera y Sprint (Drag & Drop) -->
+  <dialog id="dialogRaceResults" aria-labelledby="dialogRaceResultsTitle" closedby="any">
+    <form method="dialog" id="formRaceResults" class="dialog-box dialog-box-wide">
+      <header class="dialog-header">
+        <div>
+          <span class="eyebrow" id="resultsModalRoundLabel">RONDA 1</span>
+          <h2 id="dialogRaceResultsTitle">Resultados del Gran Premio</h2>
+        </div>
+        <button type="button" class="btn-close-dialog" data-close-dialog="dialogRaceResults" aria-label="Cerrar ventana">✕</button>
+      </header>
+      <div class="dialog-body">
+        <input type="hidden" id="resultsTrackIdInput" />
+
+        <!-- Barra superior: Selector de sesión (Carrera vs Sprint) y Acciones Rápidas -->
+        <div class="dnd-toolbar">
+          <div class="subtabs-bar" id="resultsSessionTabs" style="margin-bottom: 0">
+            <button type="button" class="subtab-btn active" data-results-session="race">
+              🏁 Carrera Principal
+            </button>
+            <button type="button" class="subtab-btn" data-results-session="sprint" id="btnTabSprintSession" hidden>
+              ⚡ Carrera Sprint
+            </button>
+          </div>
+
+          <div class="results-quick-btns" style="margin-bottom: 0">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnClearSlotsToPaddock" title="Enviar todos los pilotos al menú de la izquierda para ir arrastrándolos desde cero">
+              🧹 Vaciar Casilleros
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnFillRemainingSlots" title="Rellenar automáticamente los puestos que sigan vacíos">
+              ✨ Rellenar Vacíos
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" id="btnAutoFillRaceResults" title="Simular resultados de esta fecha automáticamente según el nivel de los pilotos">
+              🎲 Simular Fecha
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm" id="btnMarkTrackPending" title="Marcar esta fecha como aún no disputada">
+              ⏳ Dejar Pendiente
+            </button>
+          </div>
+        </div>
+
+        <!-- Resumen rápido de Pole, Vuelta Rápida y Escala de Puntos (50% suspendida / 100% normal / 200% doble) -->
+        <div class="results-bonus-bar">
+          <div class="bonus-Select-inline">
+            <label for="resultsPoleSelect">⏱️ Pole Position:</label>
+            <select id="resultsPoleSelect" class="form-control form-control-sm"></select>
+          </div>
+          <div class="bonus-Select-inline">
+            <label for="resultsFastestLapSelect">🟣 Vuelta Rápida:</label>
+            <select id="resultsFastestLapSelect" class="form-control form-control-sm"></select>
+          </div>
+          <div class="bonus-Select-inline">
+            <label for="resultsPointsMultiplierSelect">🚩 Escala Puntos:</label>
+            <select id="resultsPointsMultiplierSelect" class="form-control form-control-sm" title="Configura si la carrera repartió el 100% de puntos, el 50% por suspensión (ej. Bélgica 2021) o doble puntuación">
+              <option value="1">🏁 100% Puntos Completos</option>
+              <option value="0.5">🌧️ 50% Mitad de Puntos (Suspendida)</option>
+              <option value="2">⚡ 200% Doble Puntuación</option>
+              <option value="0">🚫 0% Suspendida sin puntos</option>
+            </select>
+          </div>
+          <span class="field-hint">💡 En cada puesto puedes marcar <strong>DNF</strong> (No terminó), <strong>DNS</strong> (No empezó) o <strong>DSQ</strong> (Descalificado).</span>
+        </div>
+
+        <!-- Tablero Drag & Drop de 2 Columnas -->
+        <div class="dnd-board-layout">
+          <!-- Columna Izquierda: Menú de Pilotos Disponibles (Paddock) -->
+          <div class="dnd-paddock-panel">
+            <div class="dnd-panel-header">
+              <h3>🏎️ Pilotos por Ubicar (<span id="dndPaddockCount">0</span>)</h3>
+              <span class="field-hint">Arrastra hacia la derecha o haz clic para ubicar</span>
+            </div>
+            <div id="dndPaddockZone" class="dnd-paddock-grid" aria-label="Pilotos disponibles para arrastrar"></div>
+          </div>
+
+          <!-- Columna Derecha: Casilleros de Posiciones Finales (1° a N°) -->
+          <div class="dnd-positions-panel">
+            <div class="dnd-panel-header">
+              <h3 id="dndPositionsPanelTitle">🏁 Posiciones de Llegada — Carrera Principal</h3>
+              <span class="field-hint">Arrastra entre puestos para intercambiar lugares</span>
+            </div>
+            <div id="dndPositionsList" class="dnd-positions-list" aria-label="Casilleros de posiciones de llegada"></div>
+          </div>
+        </div>
+      </div>
+      <footer class="dialog-footer">
+        <span class="field-hint" id="resultsValidationHint">Los puestos vacíos al final se completan automáticamente al guardar.</span>
+        <div class="footer-right">
+          <button type="button" class="btn btn-ghost" data-close-dialog="dialogRaceResults">Cancelar</button>
+          <button type="submit" value="save" class="btn btn-primary">🏁 Guardar Resultados y Recalcular</button>
+        </div>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Modal 5: Cargar Temporada Histórica hasta una Fecha Específica -->
+  <dialog id="dialogHistMidSeason" aria-labelledby="dialogHistMidTitle" closedby="any">
+    <form method="dialog" id="formHistMidSeason" class="dialog-box">
+      <header class="dialog-header">
+        <h2 id="dialogHistMidTitle">⏱️ Cargar Temporada a Mitad de Camino</h2>
+        <button type="button" class="btn-close-dialog" data-close-dialog="dialogHistMidSeason" aria-label="Cerrar ventana">✕</button>
+      </header>
+      <div class="dialog-body">
+        <input type="hidden" id="histMidYearInput" value="2021" />
+        <p class="panel-desc" id="histMidSeasonDesc" style="margin-bottom: 14px">
+          Elige hasta qué Gran Premio mantener los resultados históricos reales. Las fechas posteriores quedarán pendientes para que pruebes las predicciones y el simulador Monte Carlo.
+        </p>
+        <div class="form-group">
+          <label for="histMidRoundSelect">Dejar resultados reales completados hasta:</label>
+          <select id="histMidRoundSelect" class="form-control"></select>
+        </div>
+      </div>
+      <footer class="dialog-footer">
+        <button type="button" class="btn btn-ghost" data-close-dialog="dialogHistMidSeason">Cancelar</button>
+        <button type="submit" value="save" class="btn btn-primary">🚀 Cargar desde este Punto</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <!-- Modal 6: Desglose Matemático y Combinaciones ¿Qué necesita para lograr su Mejor Posición? -->
+  <dialog id="dialogTargetRequirements" class="dialog-xl" aria-labelledby="dialogTargetReqTitle" closedby="any">
+    <div class="dialog-box">
+      <header class="dialog-header">
+        <div>
+          <span class="eyebrow" id="targetReqEyebrow">ANÁLISIS MATEMÁTICO DE COMBINACIONES Y RESULTADOS REQUERIDOS</span>
+          <h2 id="dialogTargetReqTitle">🎯 ¿Qué necesita para lograr su Mejor Posición?</h2>
+        </div>
+        <button type="button" class="btn-close-dialog" data-close-dialog="dialogTargetRequirements" aria-label="Cerrar ventana">✕</button>
+      </header>
+      <div class="dialog-body" id="targetReqBodyContent"></div>
+      <footer class="dialog-footer">
+        <span class="field-hint">💡 Tip: Puedes cambiar el puesto objetivo arriba para explorar qué resultados necesita para cada posición posible.</span>
+        <div class="footer-right">
+          <button type="button" class="btn btn-primary" data-close-dialog="dialogTargetRequirements">Entendido</button>
+        </div>
+      </footer>
+    </div>
+  </dialog>
+
+  <script src="native_bridge.js"></script>
+  <script src="tracks_catalog.js"></script>
+    <script src="historical_catalog.js"></script>
+  <script src="historical_seasons_bundle.js"></script>
+  <script src="live_config.js"></script>
+  <script src="live_sync.js"></script>
+  <script src="data.js"></script>
+  <script src="engine.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
