@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Championship Studio</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-badge">CS</span>
+        <div>
+          <div class="brand-title">CHAMPIONSHIP</div>
+          <div class="brand-sub">STUDIO • TELEMETRY</div>
+        </div>
+      </div>
+
+      <div class="season-box">
+        <span class="season-tag" id="sidebarSeasonTag">TEMPORADA 2026</span>
+        <strong class="season-name" id="sidebarChampName">Campeonato Mundial</strong>
+        <div class="season-progress-row">
+          <span id="sidebarProgressText">0 de 0 fechas disputadas</span>
+          <span id="sidebarProgressPct">0%</span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="sidebarProgressFill" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Navegación principal">
+        <button type="button" class="nav-item active" data-tab="standings">
+          <span class="nav-icon">🏆</span>
+          <div>
+            <span class="nav-title">Campeonato y Puntos</span>
+            <span class="nav-desc">Tabla, bolsa y chances</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-tab="simulator">
+          <span class="nav-icon">🎲</span>
+          <div>
+            <span class="nav-title">Simulador de Probabilidades</span>
+            <span class="nav-desc">Proyección y escenarios</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-tab="calendar">
+          <span class="nav-icon">📅</span>
+          <div>
+            <span class="nav-title">Calendario y Resultados</span>
+            <span class="nav-desc">Fechas, deltas y vueltas</span>
+          </div>
+        </button>
+        <button type="button" class="nav-item" data-tab="custom">
+          <span class="nav-icon">🎮</span>
+          <div>
+            <span class="nav-title">Temporada Personalizada</span>
+            <span class="nav-desc">Tu liga o campeonato</span>
+          </div>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="btnSyncLive">🔄 Buscar resultados nuevos</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btnReset">↺ Restablecer oficial</button>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <div id="liveBanner" class="live-banner" role="status" hidden>
+        <span id="liveBannerText">Hay resultados nuevos disponibles.</span>
+        <div class="live-banner-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="btnApplyLive">Actualizar ahora</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="btnDismissLive">Ahora no</button>
+        </div>
+      </div>
+
+      <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+      <section id="tab-standings" class="tab-panel active">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">CENTRO DE TELEMETRÍA Y MATEMÁTICA DEL TÍTULO</span>
+            <h1>Estado del Campeonato y Puntos en Juego</h1>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn btn-secondary" id="btnGoToCalendar">📅 Ver Calendario</button>
+            <button type="button" class="btn btn-primary" id="btnGoToSim">🎲 Calcular Probabilidades</button>
+          </div>
+        </header>
+
+        <section class="kpi-grid">
+          <article class="kpi-card kpi-red">
+            <div class="kpi-top">
+              <span class="kpi-label">BOLSA TOTAL DEL CAMPEONATO</span>
+              <span class="kpi-pill" id="kpiRacesPill">0/0 Fechas</span>
+            </div>
+            <strong class="kpi-value" id="kpiTotalPool">0 pts</strong>
+            <span class="kpi-sub" id="kpiRemainingSub">0 ya repartidos &bull; <strong>0 pts en juego</strong></span>
+          </article>
+
+          <article class="kpi-card kpi-cyan">
+            <div class="kpi-top">
+              <span class="kpi-label" id="kpiMaxLabel">MÁXIMO RESTANTE PARA 1 PILOTO</span>
+              <span class="kpi-pill" id="kpiPendingPill">0 pendientes</span>
+            </div>
+            <strong class="kpi-value" id="kpiMaxDriver">0 pts</strong>
+            <span class="kpi-sub">Ganando todo lo que queda</span>
+          </article>
+
+          <article class="kpi-card kpi-emerald">
+            <div class="kpi-top">
+              <span class="kpi-label">CONTENDIENTES MATEMÁTICOS</span>
+              <span class="kpi-pill" id="kpiContendersPill">0 vivos</span>
+            </div>
+            <strong class="kpi-value" id="kpiContenders">0 pilotos</strong>
+            <span class="kpi-sub" id="kpiContendersSub">Aún pueden alcanzar al líder</span>
+          </article>
+
+          <article class="kpi-card kpi-amber">
+            <div class="kpi-top">
+              <span class="kpi-label">LÍDER Y DEFINICIÓN</span>
+              <span class="kpi-pill" id="kpiGapPill">—</span>
+            </div>
+            <strong class="kpi-value" id="kpiLeader">—</strong>
+            <span class="kpi-sub" id="kpiLeaderSub">Sin datos</span>
+          </article>
+        </section>
+
+        <div class="subtab-bar">
+          <button type="button" class="subtab-btn active" data-subtab="drivers">🏎️ Campeonato de Pilotos y Techo Matemático</button>
+          <button type="button" class="subtab-btn" data-subtab="teams">🛡️ Campeonato de Escuderías</button>
+          <button type="button" class="subtab-btn" data-subtab="evolution">📈 Evolución de Puntos Fecha a Fecha</button>
+        </div>
+
+        <section id="subview-drivers" class="subview active panel">
+          <div class="panel-head">
+            <div>
+              <h2>Tabla General de Pilotos y Límite Matemático</h2>
+              <p class="panel-desc">Incluye el puntaje máximo teórico, rango de posiciones posibles y probabilidades.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="standings-table">
+              <thead>
+                <tr>
+                  <th>Posición / Piloto</th>
+                  <th class="num">Puntos</th>
+                  <th class="num">Dif. Líder</th>
+                  <th class="num">Máx. Posible</th>
+                  <th class="num">Rango Posible</th>
+                  <th class="num">PG / Podios</th>
+                  <th>Posición Máxima y % Opción</th>
+                </tr>
+              </thead>
+              <tbody id="driversBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="subview-teams" class="subview panel">
+          <div class="panel-head">
+            <div>
+              <h2>Tabla General de Constructores</h2>
+              <p class="panel-desc">Suma de puntos de los pilotos de cada escudería y techo matemático.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="standings-table">
+              <thead>
+                <tr>
+                  <th>Posición / Escudería</th>
+                  <th class="num">Puntos</th>
+                  <th class="num">Dif. Líder</th>
+                  <th class="num">Máx. Posible</th>
+                  <th class="num">Rango Posible</th>
+                  <th class="num">PG / Podios</th>
+                  <th>Posición Máxima y % Opción</th>
+                </tr>
+              </thead>
+              <tbody id="teamsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="subview-evolution" class="subview panel">
+          <div class="panel-head">
+            <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+              <h2>Evolución de Puntos Fecha a Fecha</h2>
+              <div class="subtab-bar" style="margin-bottom:0;">
+                <button type="button" class="subtab-btn active" data-evo-view="drivers" style="padding:5px 10px;">Pilotos</button>
+                <button type="button" class="subtab-btn" data-evo-view="teams" style="padding:5px 10px;">Escuderías</button>
+              </div>
+            </div>
+            <div id="chartLegend" class="chart-legend"></div>
+          </div>
+          <div id="evolutionChart" class="evolution-chart"></div>
+        </section>
+      </section>
+
+      <section id="tab-simulator" class="tab-panel">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">PROYECCIÓN DE RESULTADOS FINALES</span>
+            <h1>Predicción y Probabilidades de Posiciones Finales</h1>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn btn-primary" id="btnRunSim">⚡ Calcular Probabilidades Ahora</button>
+          </div>
+        </header>
+
+        <div class="panel sim-settings-panel">
+          <div class="sim-settings-grid">
+            <label>
+              <span>Cantidad de escenarios</span>
+              <select id="selectIterations">
+                <option value="5000">5.000 simulaciones</option>
+                <option value="15000" selected>15.000 simulaciones</option>
+                <option value="50000">50.000 simulaciones</option>
+                <option value="100000">100.000 simulaciones</option>
+              </select>
+            </label>
+            <label>
+              <span>Peso de Forma Actual: <strong id="labelForm">45%</strong></span>
+              <input type="range" id="rangeForm" min="0" max="100" value="45" />
+            </label>
+            <label>
+              <span>Imprevisibilidad: <strong id="labelChaos">35%</strong></span>
+              <input type="range" id="rangeChaos" min="10" max="90" value="35" />
+            </label>
+          </div>
+        </div>
+
+        <div class="subtab-bar">
+          <button type="button" class="subtab-btn active" data-sim-view="drivers">🏎️ Simulación de Pilotos</button>
+          <button type="button" class="subtab-btn" data-sim-view="teams">🛡️ Simulación de Escuderías</button>
+        </div>
+
+        <div id="candidatesGrid" class="candidates-grid"></div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="simTableTitle">Proyección Final de Puntos y Probabilidades</h2>
+              <p class="panel-desc" id="simSubtitle"></p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="standings-table matrix-table">
+              <thead id="matrixHead"></thead>
+              <tbody id="matrixBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-calendar" class="tab-panel">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">TEMPORADA OFICIAL • RESULTADOS POR GRAN PREMIO</span>
+            <h1>Calendario y Resultados Detallados</h1>
+          </div>
+        </header>
+
+        <div id="calendarGrid" class="calendar-grid"></div>
+      </section>
+
+      <section id="tab-custom" class="tab-panel">
+        <header class="view-header">
+          <div>
+            <span class="eyebrow">CAMPEONATO AISLADO • AMIGOS O LIGA PROPIA</span>
+            <h1 id="customTitleHeading">Liga Personalizada</h1>
+          </div>
+          <div class="header-actions">
+            <button type="button" class="btn btn-ghost" id="btnResetCustom">↺ Reiniciar Liga</button>
+          </div>
+        </header>
+
+        <div class="custom-top-grid">
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Configurar Liga y Pilotos</h2>
+            </div>
+            <div class="custom-form-row">
+              <input type="text" id="inputCustomName" class="input-ctrl" placeholder="Nombre del campeonato (ej. Liga con Amigos)" />
+              <button type="button" class="btn btn-secondary btn-sm" id="btnSaveCustomName">Guardar Nombre</button>
+            </div>
+            <div class="custom-form-row">
+              <input type="text" id="inputCustomDriverName" class="input-ctrl" placeholder="Nombre piloto / jugador" />
+              <input type="text" id="inputCustomDriverCode" class="input-ctrl input-short" maxlength="3" placeholder="SIG" />
+              <input type="color" id="inputCustomDriverColor" value="#e10600" title="Color" />
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddCustomDriver">+ Piloto</button>
+            </div>
+            <div id="customDriversChips" class="chips-list"></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <h2>Calendario de tu Liga</h2>
+            </div>
+            <div class="custom-form-row">
+              <input type="text" id="inputCustomTrackName" class="input-ctrl" placeholder="Nombre de la fecha (ej. Fecha 4 — Spa)" />
+              <button type="button" class="btn btn-primary btn-sm" id="btnAddCustomTrack">+ Fecha</button>
+            </div>
+            <div class="custom-form-row">
+              <select id="selectCustomTrack"></select>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnDeleteCustomTrack">Eliminar Fecha</button>
+            </div>
+            <div id="customPositions" class="quick-positions"></div>
+            <div class="custom-form-row" style="margin-top:10px">
+              <select id="selectCustomFl"></select>
+              <button type="button" class="btn btn-primary btn-sm" id="btnApplyCustomRace">Guardar Resultado</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="btnClearCustomRace">Dejar Pendiente</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-top:18px">
+          <div class="panel-head">
+            <div>
+              <h2>Tabla de tu Campeonato Personalizado</h2>
+              <p class="panel-desc" id="customStandingsMeta"></p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="standings-table">
+              <thead>
+                <tr>
+                  <th>Posición / Piloto</th>
+                  <th class="num">Puntos</th>
+                  <th class="num">Dif. Líder</th>
+                  <th class="num">Máx. Posible</th>
+                  <th class="num">PG / Podios</th>
+                  <th class="num">Prob. Título</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody id="customStandingsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="dialogTarget" closedby="any">
+    <div class="dialog-box">
+      <header class="dialog-head">
+        <div>
+          <span class="kpi-label">ESCENARIOS DEL CAMPEONATO</span>
+          <h3 id="targetTitle">Análisis</h3>
+        </div>
+        <button type="button" class="btn-close" id="btnCloseTarget" aria-label="Cerrar">✕</button>
+      </header>
+      <div class="dialog-body">
+        <div class="target-summary">
+          <div class="target-rank-pick">
+            <label for="selectTargetRank">Puesto objetivo:</label>
+            <select id="selectTargetRank"></select>
+          </div>
+          <p id="targetHeadline" class="target-headline"></p>
+        </div>
+        <ul id="targetDetails" class="target-list"></ul>
+        <div id="targetRivals" class="rivals-list"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="dialogRaceDetails" class="dialog-lg" closedby="any">
+    <div class="dialog-box">
+      <header class="dialog-head">
+        <div>
+          <span class="kpi-label" id="raceDetailMeta">RESULTADOS OFICIALES</span>
+          <h3 id="raceDetailTitle">Gran Premio</h3>
+        </div>
+        <button type="button" class="btn-close" id="btnCloseRaceDetails" aria-label="Cerrar">✕</button>
+      </header>
+      <div class="dialog-body">
+        <div id="raceDetailHighlights" class="detail-highlights"></div>
+        <div class="table-wrap" style="max-height: 60vh; overflow-y: auto;">
+          <table class="standings-table">
+            <thead>
+              <tr>
+                <th>Pos</th>
+                <th>Piloto</th>
+                <th>Escudería</th>
+                <th class="num">Tiempo / Delta</th>
+                <th class="num">Puntos</th>
+              </tr>
+            </thead>
+            <tbody id="raceDetailBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
