@@ -1,6 +1,6 @@
 # Championship Studio
 
-App de escritorio para seguir la tabla del campeonato, ver escenarios por piloto o escudería y proyectar cómo puede terminar la temporada.
+App de escritorio para seguir la tabla del campeonato de Formula 1, ver escenarios por piloto o escudería y proyectar cómo puede terminar la temporada.
 
 ## Funciones
 
